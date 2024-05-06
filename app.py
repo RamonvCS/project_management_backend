@@ -113,30 +113,77 @@ def delete_member(member_id):
 
 
 #ruta 6 GET ALL TASK
+# @app.route('/api/get_all_tasks', methods=['GET'])
+# def get_all_tasks():
+#     try:
+
+#         project_id = []
+#         with conn.cursor() as cursor:
+#             cursor.execute("SELECT project_id, project_name FROM projects")
+#             project_id = cursor.fetchall()
+#             for id in project_id:
+#                 print(id)
+            
+
+#         tasks_list = []
+#         with conn.cursor() as cursor:
+#             for id in project_id:
+#                 cursor.execute("SELECT * FROM tasks WHERE project_id = %s", (id))
+#                 tasks = cursor.fetchall()
+#                 if tasks:
+#                     for task in tasks:
+#                         tasks_list.append({
+#                             "task_id": task[0],  
+#                             "task_name": task[1],
+#                             "start_date": task[2],
+#                             "end_date": task[3]
+#                         })
+#                 else:
+#                     return jsonify({"message": "No tasks found"}), 404
+#             response = jsonify({"data": tasks_list})
+#             response.headers.add("Content-Type", 'application/json')
+#             response.headers.add('Access-Control-Allow-Origin', '*')
+#             return response
+#     except mariadb.Error as e:
+#             print("Error:", e)
+#             return jsonify({"error": "An error occurred while fetching tasks"}), 500
+
 @app.route('/api/get_all_tasks', methods=['GET'])
 def get_all_tasks():
     try:
-        tasks_list = []
+        tasks_by_project = {}
+
+        # Obtener todas las tareas junto con la información del proyecto
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM tasks")
+            cursor.execute("""
+                SELECT t.task_id, t.task_name, t.start_date, t.end_date, t.project_id, p.project_name 
+                FROM tasks t 
+                JOIN projects p ON t.project_id = p.project_id
+            """)
             tasks = cursor.fetchall()
-            if tasks:
-                for task in tasks:
-                    tasks_list.append({
-                        "task_id": task[0],  
-                        "task_name": task[1],
-                        "start_date": task[2],
-                        "end_date": task[3]
-                    })
-            else:
-                return jsonify({"message": "No tasks found"}), 404
-        response = jsonify({"data": tasks_list})
+            for task in tasks:
+                task_info = {
+                    "task_id": task[0],
+                    "task_name": task[1],
+                    "start_date": task[2],
+                    "end_date": task[3]
+                }
+                project_id = task[4]
+                project_name = task[5]
+                if project_id not in tasks_by_project:
+                    tasks_by_project[project_id] = {"project_name": project_name, "tasks": []}
+                tasks_by_project[project_id]["tasks"].append(task_info)
+
+        # Construir la respuesta JSON
+        response_data = [{"project_id": project_id, "project_name": project_data["project_name"], "tasks": project_data["tasks"]} for project_id, project_data in tasks_by_project.items()]
+        response = jsonify({"data": response_data})
         response.headers.add("Content-Type", 'application/json')
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response
     except mariadb.Error as e:
         print("Error:", e)
         return jsonify({"error": "An error occurred while fetching tasks"}), 500
+
 
 #ruta 7 DELETE PROJECT
 @app.route('/api/delete_project/<int:project_id>', methods=['DELETE'])
@@ -199,10 +246,30 @@ def update_project():
         # Cerrar el cursor después de usarlo para liberar recursos
         cursor.close()
 
-#Ruta 9 Create Task 
+#Ruta 9 Delete a Task 
+@app.route('/api/delete_task/<int:task_id>', methods=['DELETE'])
+def delete_task(task_id):
+    try:
+        cursor = conn.cursor()
+        
+        # Check if task exists
+        cursor.execute("SELECT * FROM tasks WHERE task_id = %s", (task_id,))
+        task = cursor.fetchone()
 
-
-
+        if task is None:
+            # If task does not exist, return a message and 404 Not Found status
+            return jsonify({"error": "Task does not exist."}), 404
+        
+        # Delete the task
+        cursor.execute("DELETE FROM tasks WHERE task_id = %s", (task_id,))
+        conn.commit()
+        
+        return jsonify({"message": "Task deleted successfully."}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
