@@ -60,8 +60,8 @@ def new_project():
         cursor.close()
 
 # Ruta 3: Create a new task for a specific member
-@app.route('/api/new_task/<int:member_id>', methods=['POST'])
-def new_task(member_id):
+@app.route('/api/new_task/<int:project_id>/<int:member_id>', methods=['POST'])
+def new_task(project_id, member_id):
     data = request.json
     task_name = data.get('task_name')
     start_date = data.get('start_date')
@@ -69,12 +69,63 @@ def new_task(member_id):
 
     try:
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO tasks (task_name, start_date, end_date, member_id) VALUES (?, ?, ?, ?)", (task_name, start_date, end_date, member_id))
+        cursor.execute("INSERT INTO tasks (task_name, start_date, end_date, member_id, project_id) VALUES (?, ?, ?, ?, ?)",
+                       (task_name, start_date, end_date, member_id, project_id))
         conn.commit()
         return jsonify({"message": "New task created successfully"}), 201
     except mariadb.Error as e:
         conn.rollback()
         return jsonify({"message": str(e)}), 500
+    finally:
+        cursor.close()
+
+#ruta 4 Delete_member
+@app.route('/api/delete_member/<int:member_id>', methods=['DELETE'])
+def delete_member(member_id):
+    try:
+        cursor = conn.cursor()
+        # Check if member is associated with a task
+        cursor.execute("SELECT * FROM tasks WHERE member_id = %s", (member_id,))
+        tasks = cursor.fetchall()
+
+        if tasks:
+            # If tasks exist for the member, return a message and 400 Bad Request status
+            return jsonify({"error": "Cannot delete member as they are associated with a task."}), 400
+        else:
+            # If no tasks exist for the member, delete the member
+            cursor.execute("DELETE FROM team_members WHERE member_id = %s", (member_id,))
+            conn.commit()
+            return jsonify({"message": "Member deleted successfully."}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+    
+#ruta 5 llamar (GET) a todos los TASK
+@app.route('/api/get_all_tasks', methods=['GET'])
+def get_all_tasks():
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM tasks")
+        tasks = cursor.fetchall()
+        tasks_list = []
+        for task in tasks:
+            tasks_list.append({
+                "task_id": task[0],
+                "task_name": task[1],
+                "start_date": task[2],
+                "end_date": task[3],
+                "project_id": task[4],
+                "member_id": task[5]
+            })
+        response = jsonify({"data": tasks_list})
+        response.headers.add("Content-Type", 'application/json')
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
         
