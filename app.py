@@ -103,31 +103,29 @@ def delete_member(member_id):
         cursor.close()
     
 #ruta 5 llamar (GET) a todos los TASK
-@app.route('/api/get_all_tasks', methods=['GET'])
-def get_all_tasks():
+@app.route('/api/get_all_tasks/<int:project_id>', methods=['GET'])
+def get_all_tasks(project_id):
     try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM tasks")
-        tasks = cursor.fetchall()
         tasks_list = []
-        for task in tasks:
-            tasks_list.append({
-                "task_id": task[0],
-                "task_name": task[1],
-                "start_date": task[2],
-                "end_date": task[3],
-                "project_id": task[4],
-                "member_id": task[5]
-            })
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT * FROM tasks WHERE project_id = %s", (project_id,))
+            tasks = cursor.fetchall()
+            if tasks:
+                for task in tasks:
+                    tasks_list.append({
+                        "task_name": task[0],
+                        "start_date": task[1],
+                        "end_date": task[2]
+                    })
+            else:
+                return jsonify({"message": "No tasks found for project {}".format(project_id)}), 404
         response = jsonify({"data": tasks_list})
         response.headers.add("Content-Type", 'application/json')
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response
-    except Exception as e:
+    except mariadb.Error as e:
         print("Error:", e)
-        return jsonify({"error": str(e)}), 500
-    finally:
-        cursor.close()
-        
+        return jsonify({"error": "An error occurred while fetching tasks"}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
