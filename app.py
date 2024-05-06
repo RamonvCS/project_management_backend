@@ -84,6 +84,15 @@ def new_task(project_id, member_id):
 def delete_member(member_id):
     try:
         cursor = conn.cursor()
+        
+        # Check if member exists
+        cursor.execute("SELECT * FROM team_members WHERE member_id = %s", (member_id,))
+        member = cursor.fetchone()
+
+        if member is None:
+            # If member does not exist, return a message and 404 Not Found status
+            return jsonify({"error": "Member does not exist."}), 404
+        
         # Check if member is associated with a task
         cursor.execute("SELECT * FROM tasks WHERE member_id = %s", (member_id,))
         tasks = cursor.fetchall()
@@ -101,24 +110,25 @@ def delete_member(member_id):
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
-    
-#ruta 5 llamar (GET) a todos los TASK
-@app.route('/api/get_all_tasks/<int:project_id>', methods=['GET'])
-def get_all_tasks(project_id):
+
+
+#ruta 6 GET ALL TASK
+@app.route('/api/get_all_tasks', methods=['GET'])
+def get_all_tasks():
     try:
         tasks_list = []
         with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM tasks WHERE project_id = %s", (project_id,))
+            cursor.execute("SELECT * FROM tasks")
             tasks = cursor.fetchall()
             if tasks:
                 for task in tasks:
                     tasks_list.append({
-                        "task_name": task[0],
-                        "start_date": task[1],
-                        "end_date": task[2]
+                        "task_name": task[1],  # Cambiado de task[0] a task[1]
+                        "start_date": task[2],
+                        "end_date": task[3]
                     })
             else:
-                return jsonify({"message": "No tasks found for project {}".format(project_id)}), 404
+                return jsonify({"message": "No tasks found"}), 404  # No necesitas el project_id aquí
         response = jsonify({"data": tasks_list})
         response.headers.add("Content-Type", 'application/json')
         response.headers.add('Access-Control-Allow-Origin', '*')
@@ -126,6 +136,40 @@ def get_all_tasks(project_id):
     except mariadb.Error as e:
         print("Error:", e)
         return jsonify({"error": "An error occurred while fetching tasks"}), 500
+
+#ruta 7 DELETE PROJECT
+@app.route('/api/delete_project/<int:project_id>', methods=['DELETE'])
+def delete_project(project_id):
+    try:
+        cursor = conn.cursor()
+        
+        # Check if project exists
+        cursor.execute("SELECT * FROM projects WHERE project_id = %s", (project_id,))
+        project = cursor.fetchone()
+
+        if project is None:
+            # If project does not exist, return a message and 404 Not Found status
+            return jsonify({"error": "Project does not exist."}), 404
+        
+        # Check if project is associated with any tasks
+        cursor.execute("SELECT * FROM tasks WHERE project_id = %s", (project_id,))
+        tasks = cursor.fetchall()
+
+        if tasks:
+            # If tasks exist for the project, return a message and 400 Bad Request status
+            return jsonify({"error": "Cannot delete project as it is associated with tasks."}), 400
+        else:
+            # If no tasks exist for the project, delete the project
+            cursor.execute("DELETE FROM projects WHERE project_id = %s", (project_id,))
+            conn.commit()
+            return jsonify({"message": "Project deleted successfully."}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+
+#Ruta 8 Update Project 
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
