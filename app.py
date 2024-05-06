@@ -123,12 +123,13 @@ def get_all_tasks():
             if tasks:
                 for task in tasks:
                     tasks_list.append({
-                        "task_name": task[1],  # Cambiado de task[0] a task[1]
+                        "task_id": task[0],  
+                        "task_name": task[1],
                         "start_date": task[2],
                         "end_date": task[3]
                     })
             else:
-                return jsonify({"message": "No tasks found"}), 404  # No necesitas el project_id aquí
+                return jsonify({"message": "No tasks found"}), 404
         response = jsonify({"data": tasks_list})
         response.headers.add("Content-Type", 'application/json')
         response.headers.add('Access-Control-Allow-Origin', '*')
@@ -170,6 +171,38 @@ def delete_project(project_id):
         cursor.close()
 
 #Ruta 8 Update Project 
+from flask import request, jsonify
+
+@app.route('/api/update_project', methods=['POST'])
+def update_project():
+    try:
+        datos = request.json
+        project_id = datos.get('project_id')  # Obtener el project_id de los datos de entrada
+        project_name = datos.get('project_name')
+        description = datos.get('description')
+        status = datos.get('status')
+        
+        # Crear un cursor dentro de la función para tener acceso a él
+        cursor = conn.cursor()
+        
+        # Utilizar parámetros seguros en la consulta SQL
+        cursor.execute("UPDATE projects SET project_name = %s, description = %s, status = %s WHERE project_id = %s",
+                       (project_name, description, status, project_id))
+        conn.commit()
+
+        response = {"message": "Record updated"}
+        return jsonify(response), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        # Cerrar el cursor después de usarlo para liberar recursos
+        cursor.close()
+
+#Ruta 9 Create Task 
+
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
