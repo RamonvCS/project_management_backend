@@ -1,38 +1,31 @@
-from flask import Flask, jsonify, request
+from flask import jsonify, request
+import mariadb
+from flask import jsonify, request
 import mariadb
 import sys
 from config import DATABASE_CONFIG
 
-app = Flask(__name__)
+conn = mariadb.connect(**DATABASE_CONFIG)
 
-try:
-    conn = mariadb.connect(**DATABASE_CONFIG)
-except mariadb.Error as e:
-    print(f"Error connecting to MariaDB: {e}")
-    sys.exit(1)
-
-  # Ruta 1: Create a new task for a specific member
-@app.route('/api/new_task/<int:project_id>/<int:member_id>', methods=['POST'])
-def new_task(project_id, member_id):
-    data = request.json
-    task_name = data.get('task_name')
-    start_date = data.get('start_date')
-    end_date = data.get('end_date')
-
+def get_all_members():
     try:
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO tasks (task_name, start_date, end_date, member_id, project_id) VALUES (?, ?, ?, ?, ?)",
-                       (task_name, start_date, end_date, member_id, project_id))
-        conn.commit()
-        return jsonify({"message": "New task created successfully"}), 201
+        cursor.execute("SELECT * FROM team_members")
+        members = cursor.fetchall()
+        member_list = []
+        for member in members:
+            member_dict = {
+                "member_id": member[0],
+                "name": member[1],
+                "email": member[2]
+            }
+            member_list.append(member_dict)
+        return jsonify({"members": member_list}), 200
     except mariadb.Error as e:
-        conn.rollback()
-        return jsonify({"message": str(e)}), 500
+        return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
 
-#ruta 2 Delete_member
-@app.route('/api/delete_member/<int:member_id>', methods=['DELETE'])
 def delete_member(member_id):
     try:
         cursor = conn.cursor()
@@ -62,4 +55,31 @@ def delete_member(member_id):
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
- 
+
+def update_member(member_id):
+    try:
+        cursor = conn.cursor()
+        
+        # Check if member exists
+        cursor.execute("SELECT * FROM team_members WHERE member_id = %s", (member_id,))
+        member = cursor.fetchone()
+
+        if member is None:
+            # If member does not exist, return a message and 404 Not Found status
+            return jsonify({"error": "Member does not exist."}), 404
+        
+        # Get updated data from request
+        data = request.json
+        name = data.get('name')
+        email = data.get('email')
+
+        # Update member data
+        cursor.execute("UPDATE team_members SET name = %s, email = %s WHERE member_id = %s", (name, email, member_id))
+        conn.commit()
+
+        return jsonify({"message": "Member updated successfully."}), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
