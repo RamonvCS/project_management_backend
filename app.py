@@ -11,34 +11,24 @@ except mariadb.Error as e:
     print(f"Error connecting to MariaDB: {e}")
     sys.exit(1)
 
-# Ruta 1: Retrieve all projects from the database
+# Ruta para obtener todos los proyectos
 @app.route('/api/projects', methods=['GET'])
 def projects():
     cursor = conn.cursor()
-    cursor.execute("SELECT project_name, description, project_id, status FROM projects")
-    result = cursor.fetchall()
-    cursor.close()
-
-    projects = [ProjectDTO(project_name=row[0], description=row[1], project_id=row[2], status=row[3]).to_dict() for row in result]
-
-    response = jsonify({'projects': projects})
-    response.headers.add("Access-Control-Allow-Origin", '*')
-    return response
-
-class ProjectDTO:
-    def __init__(self, project_name, description, project_id, status):
-        self.project_name = project_name
-        self.description = description
-        self.project_id = project_id
-        self.status = status
-
-    def to_dict(self):
-        return {
-            'project_name': self.project_name,
-            'description': self.description,
-            'project_id': self.project_id,
-            'status': self.status
-        }
+    try:
+        cursor.execute("SELECT project_name, description, project_id, status FROM projects")
+        rows = cursor.fetchall()
+        projects = [
+            {'project_name': row[0], 'description': row[1], 'project_id': row[2], 'status': row[3]} 
+            for row in rows
+        ]
+        response = jsonify({'projects': projects})
+        response.headers.add("Access-Control-Allow-Origin", '*')
+        return response
+    except mariadb.Error as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
 
 # Ruta 2: Create a new project in the database
 @app.route('/api/new_project', methods=['POST'])
@@ -113,41 +103,6 @@ def delete_member(member_id):
 
 
 #ruta 6 GET ALL TASK
-# @app.route('/api/get_all_tasks', methods=['GET'])
-# def get_all_tasks():
-#     try:
-
-#         project_id = []
-#         with conn.cursor() as cursor:
-#             cursor.execute("SELECT project_id, project_name FROM projects")
-#             project_id = cursor.fetchall()
-#             for id in project_id:
-#                 print(id)
-            
-
-#         tasks_list = []
-#         with conn.cursor() as cursor:
-#             for id in project_id:
-#                 cursor.execute("SELECT * FROM tasks WHERE project_id = %s", (id))
-#                 tasks = cursor.fetchall()
-#                 if tasks:
-#                     for task in tasks:
-#                         tasks_list.append({
-#                             "task_id": task[0],  
-#                             "task_name": task[1],
-#                             "start_date": task[2],
-#                             "end_date": task[3]
-#                         })
-#                 else:
-#                     return jsonify({"message": "No tasks found"}), 404
-#             response = jsonify({"data": tasks_list})
-#             response.headers.add("Content-Type", 'application/json')
-#             response.headers.add('Access-Control-Allow-Origin', '*')
-#             return response
-#     except mariadb.Error as e:
-#             print("Error:", e)
-#             return jsonify({"error": "An error occurred while fetching tasks"}), 500
-
 @app.route('/api/get_all_tasks', methods=['GET'])
 def get_all_tasks():
     try:
@@ -270,6 +225,34 @@ def delete_task(task_id):
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
+
+# Ruta 10: Update Task
+@app.route('/api/update_task', methods=['POST'])
+def update_task():
+    try:
+        data = request.json
+        task_id = data.get('task_id')  # Obtener el task_id de los datos de entrada
+        task_name = data.get('task_name')
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        
+        # Crear un cursor dentro de la función para tener acceso a él
+        cursor = conn.cursor()
+        
+        # Utilizar parámetros seguros en la consulta SQL
+        cursor.execute("UPDATE tasks SET task_name = %s, start_date = %s, end_date = %s WHERE task_id = %s",
+                       (task_name, start_date, end_date, task_id))
+        conn.commit()
+
+        response = {"message": "Record updated"}
+        return jsonify(response), 200
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        # Cerrar el cursor después de usarlo para liberar recursos
+        cursor.close()
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
