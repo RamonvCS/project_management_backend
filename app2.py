@@ -1,12 +1,14 @@
 from flask import Flask, jsonify, request
 import mariadb
 import sys
+from flask_cors import CORS
 from config import DATABASE_CONFIG
 from tasks import create_task, delete_task, get_all_tasks, update_task
 from members import get_all_members, delete_member, update_member
 from projects import new_project, delete_project, update_project, get_all_projects
 
 app = Flask(__name__)
+CORS(app)
 
 #-----------------------------** RUTAS DE TAREAS **---------------------------------------
 @app.route('/api/new_task/<int:project_id>/<int:member_id>', methods=['POST'])
