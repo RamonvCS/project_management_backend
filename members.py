@@ -7,24 +7,41 @@ from config import DATABASE_CONFIG
 
 conn = mariadb.connect(**DATABASE_CONFIG)
 
+##Abielmelex
 def get_all_members():
     try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM team_members")
-        members = cursor.fetchall()
-        member_list = []
+        members_info = {}
+
+
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT m.member_id, m.member_name, m.role, p.project_id, p.project_name
+                FROM team_members m
+                JOIN projects p ON m.project_id = p.project_id
+            """)
+            members = cursor.fetchall()
+
         for member in members:
-            member_dict = {
+            member_info = {
                 "member_id": member[0],
-                "name": member[1],
-                "email": member[2]
+                "member_name": member[1],
+                "role": member[2],
             }
-            member_list.append(member_dict)
-        return jsonify({"members": member_list}), 200
-    except mariadb.Error as e:
+            project_id = member[3]
+            project_name = member[4]
+            if project_id not in members_info:
+                members_info[project_id] = {"project_name": project_name, "members": []}
+            members_info[project_id]["members"].append(member_info)
+
+
+        response_data = [{"project_id": project_id, "project_name": project_data["project_name"], "members": project_data["members"]}
+                         for project_id, project_data in members_info.items()]
+        response = jsonify({"members": response_data})
+        response.headers.add("Access-Control-Allow-Origin", '*')
+        return response
+    except Exception as e:
+        print(e)
         return jsonify({"error": str(e)}), 500
-    finally:
-        cursor.close()
 
 def delete_member(member_id):
     try:
@@ -83,3 +100,21 @@ def update_member(member_id):
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
+
+## Abielmelex
+def add_members(project_id, member_id):
+    datos = request.json
+    role = datos.get('role')
+    member_name = datos.get('member_name')
+    
+    cursor = conn.cursor
+  
+    try:
+        cursor.execute("INSERT INTO team_members (member_id, member_name, role, project_id) VALUES (?, ?, ?, ?)", (member_id, member_name, role, project_id))
+        conn.commit()
+    except mariadb.Error as e:
+        print(f"Error de base de datos: {e}")
+        return jsonify({"error": "Error al procesar la solicitud"}), 500
+
+    return jsonify({"message": "Miembro añadido correctamente", "member_id": member_id, "role": role}), 201
+

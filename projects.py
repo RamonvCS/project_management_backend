@@ -16,9 +16,12 @@ def new_project():
         cursor.execute("INSERT INTO projects (project_name, description, status) VALUES (?, ?, ?)", (project_name, description, status))
         conn.commit()
         return jsonify({"message": "Project inserted successfully"}), 201
+    
     except mariadb.Error as e:
         conn.rollback()
-        return jsonify({"message": str(e)}), 500
+        response = jsonify({"message": str(e)}), 500
+        response.headers.add("Access-Control-Allow-Origin", '*')
+        return response
     finally:
         cursor.close()
 
