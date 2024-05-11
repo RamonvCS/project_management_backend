@@ -42,9 +42,9 @@ def update_member_route(member_id):
 
 
 #Abielmelex#
-@app.route('/api/add_members/<int:project_id>/<int:member_id>', methods=['POST'])
-def add_member_route(project_id, member_id):
-    return add_members(project_id, member_id)
+@app.route('/api/add_members/<int:project_id>', methods=['POST'])
+def add_member_route(project_id):
+    return add_members(project_id)
 
 @app.route('/api/get_members_by_project/<int:project_id>', methods=['GET'])
 def get_members_by_project_route(project_id):
