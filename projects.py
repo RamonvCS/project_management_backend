@@ -19,9 +19,8 @@ def new_project():
     
     except mariadb.Error as e:
         conn.rollback()
-        response = jsonify({"message": str(e)}), 500
-        response.headers.add("Access-Control-Allow-Origin", '*')
-        return response
+        return jsonify({"message": str(e)}), 500
+        
     finally:
         cursor.close()
 

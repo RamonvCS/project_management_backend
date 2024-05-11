@@ -36,9 +36,8 @@ def get_all_members():
 
         response_data = [{"project_id": project_id, "project_name": project_data["project_name"], "members": project_data["members"]}
                          for project_id, project_data in members_info.items()]
-        response = jsonify({"members": response_data})
-        response.headers.add("Access-Control-Allow-Origin", '*')
-        return response
+        return jsonify({"members": response_data})
+        
     except Exception as e:
         print(e)
         return jsonify({"error": str(e)}), 500
