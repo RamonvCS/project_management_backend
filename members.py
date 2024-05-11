@@ -36,7 +36,7 @@ def get_all_members():
 
         response_data = [{"project_id": project_id, "project_name": project_data["project_name"], "members": project_data["members"]}
                          for project_id, project_data in members_info.items()]
-        return jsonify({"members": response_data})
+        return jsonify({"members": response_data}), 200
         
     except Exception as e:
         print(e)
