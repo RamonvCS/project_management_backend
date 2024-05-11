@@ -109,7 +109,7 @@ def add_members(project_id):
     cursor = conn.cursor
   
     try:
-        cursor.execute("INSERT INTO team_members (member_id, member_name, role, project_id) VALUES ( ?, ?, ?)", ( member_name, role, project_id))
+        cursor.execute("INSERT INTO team_members (member_name, role, project_id) VALUES ( ?, ?, ?)", ( member_name, role, project_id))
         conn.commit()
     except mariadb.Error as e:
         print(f"Error de base de datos: {e}")
