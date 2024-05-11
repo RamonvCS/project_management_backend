@@ -4,7 +4,7 @@ import sys
 from flask_cors import CORS
 from config import DATABASE_CONFIG
 from tasks import create_task, delete_task, get_all_tasks, update_task
-from members import get_all_members, delete_member, update_member, add_members
+from members import get_all_members, delete_member, update_member, add_members, get_members_by_project
 from projects import new_project, delete_project, update_project, get_all_projects
 
 app = Flask(__name__)
@@ -45,6 +45,11 @@ def update_member_route(member_id):
 @app.route('/api/add_members/<int:project_id>/<int:member_id>', methods=['POST'])
 def add_member_route(project_id, member_id):
     return add_members(project_id, member_id)
+
+@app.route('/api/get_members_by_project/<int:project_id>', methods=['GET'])
+def get_members_by_project_route(project_id):
+    # Llama a la función que contiene la lógica de la base de datos
+    return get_members_by_project(project_id)   
 
 #-----------------------------** RUTAS DE PROYECTOS **------------------------------------
 @app.route('/api/new_project', methods=['POST'])  # Ruta para crear un nuevo proyecto

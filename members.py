@@ -118,3 +118,18 @@ def add_members(project_id, member_id):
 
     return jsonify({"message": "Miembro añadido correctamente", "member_id": member_id, "role": role}), 201
 
+
+def get_members_by_project(project_id):
+    try:
+        with conn.cursor() as cursor:
+            # Ejecuta la consulta SQL para obtener miembros que pertenecen a un proyecto específico
+            cursor.execute("SELECT member_id, member_name FROM team_members WHERE project_id = ?", (project_id,))
+            members = cursor.fetchall()
+            # Prepara los datos para la respuesta
+            member_data = [{'member_id': member[0], 'member_name': member[1]} for member in members]
+            return jsonify(member_data)
+    except mariadb.Error as e:
+        # Maneja posibles errores de la consulta
+        print(f"Database query error: {e}")
+        return jsonify({"error": "Error retrieving members"}), 500
+
