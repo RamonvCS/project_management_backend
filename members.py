@@ -101,7 +101,7 @@ def update_member(member_id):
         cursor.close()
 
 ## Abielmelex
-def add_members(project_id, member_id):
+def add_members(project_id):
     datos = request.json
     role = datos.get('role')
     member_name = datos.get('member_name')
@@ -109,13 +109,13 @@ def add_members(project_id, member_id):
     cursor = conn.cursor
   
     try:
-        cursor.execute("INSERT INTO team_members (member_id, member_name, role, project_id) VALUES (?, ?, ?, ?)", (member_id, member_name, role, project_id))
+        cursor.execute("INSERT INTO team_members (member_id, member_name, role, project_id) VALUES ( ?, ?, ?)", ( member_name, role, project_id))
         conn.commit()
     except mariadb.Error as e:
         print(f"Error de base de datos: {e}")
         return jsonify({"error": "Error al procesar la solicitud"}), 500
 
-    return jsonify({"message": "Miembro añadido correctamente", "member_id": member_id, "role": role}), 201
+    return jsonify({"message": "Miembro añadido correctamente", "role": role}), 201
 
 
 def get_members_by_project(project_id):
