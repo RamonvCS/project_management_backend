@@ -23,7 +23,7 @@ def delete_task_route(task_id):
 def get_all_tasks_route():
     return get_all_tasks()
 
-@app.route('/api/update_task/<int:task_id>', methods=['POST'])
+@app.route('/api/update_task/<int:task_id>', methods=['PUT'])
 def update_task_route(task_id):
     return update_task(task_id)
 
@@ -36,7 +36,7 @@ def get_all_members_route():
 def delete_member_route(member_id):
     return delete_member(member_id)
 
-@app.route('/api/update_member/<int:member_id>', methods=['POST'])
+@app.route('/api/update_member/<int:member_id>', methods=['PUT'])
 def update_member_route(member_id):
     return update_member(member_id)
 
@@ -60,7 +60,7 @@ def new_project_route():
 def delete_project_route(project_id):
     return delete_project(project_id)
 
-@app.route('/api/update_project/<int:project_id>', methods=['POST'])
+@app.route('/api/update_project/<int:project_id>', methods=['PUT'])
 def update_project_route(project_id):
     return update_project(project_id)
 
