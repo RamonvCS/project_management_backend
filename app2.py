@@ -4,7 +4,7 @@ import sys
 from flask_cors import CORS
 from config import DATABASE_CONFIG
 from tasks import create_task, delete_task, get_all_tasks, update_task
-from members import get_all_members, delete_member, update_member, add_members, get_members_by_project
+from members import get_all_members, delete_member, update_member, post_members, get_members_by_project
 from projects import new_project, delete_project, update_project, get_all_projects
 
 app = Flask(__name__)
@@ -36,15 +36,15 @@ def get_all_members_route():
 def delete_member_route(member_id):
     return delete_member(member_id)
 
-@app.route('/api/update_member/<int:member_id>', methods=['PUT'])
-def update_member_route(member_id):
-    return update_member(member_id)
+@app.route('/api/update_member/<int:project_id>/<int:member_id>', methods=['PUT'])
+def update_member_route(project_id, member_id):
+    return update_member(project_id, member_id)
 
 
 #Abielmelex#
 @app.route('/api/add_members/<int:project_id>', methods=['POST'])
 def add_member_route(project_id):
-    return add_members(project_id)
+    return post_members(project_id)
 
 @app.route('/api/get_members_by_project/<int:project_id>', methods=['GET'])
 def get_members_by_project_route(project_id):

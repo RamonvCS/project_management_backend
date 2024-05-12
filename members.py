@@ -72,50 +72,59 @@ def delete_member(member_id):
     finally:
         cursor.close()
 
-def update_member(member_id):
+# actualizar los dato del miembro en la base de datos
+def update_member(project_id, member_id):
+    datos = request.json
+    member_name = datos.get('member_name')
+    role = datos.get('role')
+
     try:
-        cursor = conn.cursor()
-        
-        # Check if member exists
-        cursor.execute("SELECT * FROM team_members WHERE member_id = %s", (member_id,))
-        member = cursor.fetchone()
+        with conn.cursor() as cursor:
+            # Verifica si el proyecto existe
+            cursor.execute("SELECT project_id FROM projects WHERE project_id = ?", (project_id,))
+            project = cursor.fetchone()
+            if not project:
+                return jsonify({"error": "Proyecto no encontrado"}), 404
 
-        if member is None:
-            # If member does not exist, return a message and 404 Not Found status
-            return jsonify({"error": "Member does not exist."}), 404
-        
-        # Get updated data from request
-        data = request.json
-        name = data.get('name')
-        email = data.get('email')
+            # Verifica si el miembro existe
+            cursor.execute("SELECT member_id FROM team_members WHERE member_id = ? AND project_id = ?", (member_id, project_id))
+            member = cursor.fetchone()
+            if not member:
+                return jsonify({"error": "Miembro no encontrado en el proyecto especificado"}), 404
 
-        # Update member data
-        cursor.execute("UPDATE team_members SET name = %s, email = %s WHERE member_id = %s", (name, email, member_id))
-        conn.commit()
-
-        return jsonify({"message": "Member updated successfully."}), 200
-    except Exception as e:
+            # Realiza la actualización
+            cursor.execute("UPDATE team_members SET member_name = ?, role = ? WHERE member_id = ? AND project_id = ?", 
+                           (member_name, role, member_id, project_id))
+            if cursor.rowcount == 0:
+                # No se actualizaron filas, lo que indica que el miembro o el proyecto no existen
+                return jsonify({"error": "No se actualizó ningún miembro, verifique los identificadores"}), 404
+            conn.commit()
+    except mariadb.Error as e:
         conn.rollback()
-        return jsonify({"error": str(e)}), 500
-    finally:
-        cursor.close()
+        print(f"Error updating member: {e}")
+        return jsonify({"error": "Error al actualizar miembro", "details": str(e)}), 500
 
-## Abielmelex
-def add_members(project_id):
+    return jsonify({"message": "Miembro actualizado correctamente"}), 200
+
+
+        
+#insertar datos del nuevo miembro en la base de datos
+def post_members(project_id):
+    cursor = conn.cursor()
+    
     datos = request.json
     role = datos.get('role')
     member_name = datos.get('member_name')
-    
-    cursor = conn.cursor
   
     try:
-        cursor.execute("INSERT INTO team_members (member_name, role, project_id) VALUES ( ?, ?, ?)", ( member_name, role, project_id))
+        cursor.execute("INSERT INTO team_members ( member_name, role, project_id) VALUES ( ?, ?, ?)", ( member_name, role, project_id))
         conn.commit()
     except mariadb.Error as e:
         print(f"Error de base de datos: {e}")
         return jsonify({"error": "Error al procesar la solicitud"}), 500
 
     return jsonify({"message": "Miembro añadido correctamente", "role": role}), 201
+
 
 
 def get_members_by_project(project_id):
