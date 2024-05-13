@@ -30,10 +30,10 @@ Please note that this project is not currently licensed. If you'd like to use it
 
 Connect with the team members on LinkedIn:
 
-- [Member 1](https://www.linkedin.com/in/g%C3%A9nesis-ojeda-451576302/)
-- [Member 2](www.linkedin.com/in/ramonvalentinrivera)
-- [Member 3](https://www.linkedin.com/in/abimaelsanta/)
-- [Member 4](ABIELMELEX)
+- [Genesis Ojeda (Database Specialist)](https://www.linkedin.com/in/g%C3%A9nesis-ojeda-451576302/)
+- [Ramon Valentin (Back-end Developer)](https://www.linkedin.com/in/ramonvalentinrivera)
+- [Abimael Santa (Front-end Developer)](https://www.linkedin.com/in/abimaelsanta/)
+- [Abielmelex (Back-end Developer)](ABIELMELEX)
 
 ## Installation
 
