@@ -5,6 +5,7 @@ from config import DATABASE_CONFIG
 
 conn = mariadb.connect(**DATABASE_CONFIG)
 
+#------------------------------------** FUNCION NEW PROJECT **----------------------------------------
 def new_project():
     try:
         data = request.json
@@ -24,6 +25,7 @@ def new_project():
     finally:
         cursor.close()
 
+#------------------------------------** FUNCION DELETE PROJECT **----------------------------------------
 def delete_project(project_id):
     try:
         cursor = conn.cursor()
@@ -33,7 +35,6 @@ def delete_project(project_id):
         project = cursor.fetchone()
 
         if project is None:
-            # If project does not exist, return a message and 404 Not Found status
             return jsonify({"error": "Project does not exist."}), 404
         
         # Check if project is associated with any tasks
@@ -41,10 +42,8 @@ def delete_project(project_id):
         tasks = cursor.fetchall()
 
         if tasks:
-            # If tasks exist for the project, return a message and 400 Bad Request status
             return jsonify({"error": "Cannot delete project as it is associated with tasks."}), 400
         else:
-            # If no tasks exist for the project, delete the project
             cursor.execute("DELETE FROM projects WHERE project_id = %s", (project_id,))
             conn.commit()
             return jsonify({"message": "Project deleted successfully."}), 200
@@ -54,6 +53,7 @@ def delete_project(project_id):
     finally:
         cursor.close()
 
+#------------------------------------** FUNCION UPDATE PROJECT **----------------------------------------
 def update_project(project_id):
     try:
         data = request.json
@@ -73,6 +73,7 @@ def update_project(project_id):
     finally:
         cursor.close()
 
+#------------------------------------** FUNCION GET ALL PROJECTS **----------------------------------------
 def get_all_projects():
     cursor = conn.cursor()
     try:
