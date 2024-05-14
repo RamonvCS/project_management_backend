@@ -53,18 +53,18 @@ def get_all_tasks():
         projects_with_tasks = {}
 
         # Inicializar la lista de proyectos con sus datos
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT project_id, project_name FROM projects")
-            all_projects = cursor.fetchall()
-            for project in all_projects:
-                project_id, project_name = project
-                projects_with_tasks[project_id] = {"project_name": project_name, "tasks": []}
-
-        # Llenar los proyectos con las tareas existentes
         cursor = conn.cursor()
+        cursor.execute("SELECT project_id, project_name FROM projects")
+        all_projects = cursor.fetchall()
+        for project in all_projects:
+            project_id, project_name = project
+            projects_with_tasks[project_id] = {"project_name": project_name, "tasks": []}
+
+        # Llenar los proyectos con las tareas existentes, incluyendo el nombre del miembro
         cursor.execute("""
-            SELECT t.task_id, t.task_name, t.start_date, t.end_date, t.project_id 
+            SELECT t.task_id, t.task_name, t.start_date, t.end_date, t.project_id, t.member_id, m.member_name
             FROM tasks t
+            JOIN team_members m ON t.member_id = m.member_id
         """)
         tasks = cursor.fetchall()
         for task in tasks:
@@ -72,24 +72,30 @@ def get_all_tasks():
                 "task_id": task[0],
                 "task_name": task[1],
                 "start_date": task[2],
-                "end_date": task[3]
+                "end_date": task[3],
+                "member_id": task[4],
+                "member_name": task[6]  # Añadido el nombre del miembro
             }
             project_id = task[4]
             if project_id in projects_with_tasks:
                 projects_with_tasks[project_id]["tasks"].append(task_info)
 
         # Construir la respuesta JSON
-        response_data = [{"project_id": project_id, "project_name": project_data["project_name"], "tasks": project_data["tasks"]} for project_id, project_data in projects_with_tasks.items()]
+        response_data = [
+            {
+                "project_id": project_id,
+                "project_name": project_data["project_name"],
+                "tasks": project_data["tasks"]
+            } for project_id, project_data in projects_with_tasks.items()
+        ]
         return jsonify({"data": response_data}), 200
 
     except Exception as e:
-        # Manejo de excepciones general
+        print(e)
         return jsonify({"error": str(e)}), 500
 
     finally:
-        # Asegurar que el cursor se cierre después de la ejecución
-        if cursor:
-            cursor.close()
+        cursor.close()
 
 #------------------------------------** FUNCION UPDATE TASK **----------------------------------------
 def update_task(task_id):

@@ -12,35 +12,53 @@ def get_all_members():
     try:
         members_info = {}
 
+        # Start a database cursor
+        cursor = conn.cursor()
+        
+            # Fetch members and the projects they belong to
+        cursor.execute("SELECT project_id, project_name FROM projects")
+        all_projects = cursor.fetchall()
+        for project in all_projects:
+            project_id, project_name = project
+            members_info[project_id] = {"project_name": project_name, "members": []}
 
-        with conn.cursor() as cursor:
-            cursor.execute("""
+        # Llenar los proyectos con las tareas existentes, incluyendo el nombre del miembro
+        cursor.execute("""
                 SELECT m.member_id, m.member_name, m.role, p.project_id, p.project_name
                 FROM team_members m
                 JOIN projects p ON m.project_id = p.project_id
             """)
-            members = cursor.fetchall()
-
+        members = cursor.fetchall()
+        
+        # Organize members by their projects
         for member in members:
             member_info = {
-                "member_id": member[0],
-                "member_name": member[1],
+                "member_id": member[0],  # Ensures member ID is included
+                "member_name": member[1],  # Ensures member name is included
                 "role": member[2],
             }
+
             project_id = member[3]
             project_name = member[4]
-            if project_id not in members_info:
-                members_info[project_id] = {"project_name": project_name, "members": []}
-            members_info[project_id]["members"].append(member_info)
+            if project_id in members_info:
+                members_info[project_id]["members"].append(member_info)
 
+        # Prepare the response
+        response_data = [{
+            "project_id": project_id, 
+            "project_name": project_data["project_name"], 
+            "members": project_data["members"]
+        } for project_id, project_data in members_info.items()
+        ]
 
-        response_data = [{"project_id": project_id, "project_name": project_data["project_name"], "members": project_data["members"]}
-                         for project_id, project_data in members_info.items()]
         return jsonify({"members": response_data}), 200
-        
+
     except Exception as e:
+        # Handle exceptions and return an error message
         print(e)
         return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
 
 def delete_member(member_id):
     try:

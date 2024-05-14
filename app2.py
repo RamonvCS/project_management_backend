@@ -27,9 +27,6 @@ def get_all_tasks_route():
 def update_task_route(task_id):
     return update_task(task_id)
 
-@app.route('/api/update_task/<int:task_id>', methods=['PUT'])
-def update_task_route(task_id):
-    return update_task(task_id)
 
 #-----------------------------** RUTAS DE MIEMBROS **-------------------------------------
 @app.route('/api/get_all_members', methods=['GET'])
