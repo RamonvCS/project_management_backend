@@ -40,9 +40,14 @@ def delete_project(project_id):
         # Check if project is associated with any tasks
         cursor.execute("SELECT * FROM tasks WHERE project_id = %s", (project_id,))
         tasks = cursor.fetchall()
+        
+        cursor.execute("SELECT * FROM team_members WHERE project_id = %s", (project_id,))
+        members = cursor.fetchall()
 
         if tasks:
             return jsonify({"error": "Cannot delete project as it is associated with tasks."}), 400
+        elif members:
+            return jsonify({"error": "Cannot delete project as it is associated with members."}), 400
         else:
             cursor.execute("DELETE FROM projects WHERE project_id = %s", (project_id,))
             conn.commit()

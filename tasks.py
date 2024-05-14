@@ -73,7 +73,7 @@ def get_all_tasks():
                 "task_name": task[1],
                 "start_date": task[2],
                 "end_date": task[3],
-                "member_id": task[4],
+                "member_id": task[5],
                 "member_name": task[6]  # Añadido el nombre del miembro
             }
             project_id = task[4]
@@ -98,7 +98,7 @@ def get_all_tasks():
         cursor.close()
 
 #------------------------------------** FUNCION UPDATE TASK **----------------------------------------
-def update_task(task_id):
+def update_task(task_id, member_id):
     try:
         data = request.json
         task_name = data.get('task_name')
@@ -106,8 +106,8 @@ def update_task(task_id):
         end_date = data.get('end_date')
         
         cursor = conn.cursor()
-        cursor.execute("UPDATE tasks SET task_name = %s, start_date = %s, end_date = %s WHERE task_id = %s",
-                       (task_name, start_date, end_date, task_id))
+        cursor.execute("UPDATE tasks SET task_name = %s, start_date = %s, end_date = %s, member_id = %s WHERE task_id = %s",
+                       (task_name, start_date, end_date, member_id, task_id))
         conn.commit()
 
         return jsonify({"message": "Record updated"}), 200

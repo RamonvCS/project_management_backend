@@ -23,9 +23,9 @@ def delete_task_route(task_id):
 def get_all_tasks_route():
     return get_all_tasks()
 
-@app.route('/api/update_task/<int:task_id>', methods=['PUT'])
-def update_task_route(task_id):
-    return update_task(task_id)
+@app.route('/api/update_task/<int:task_id>/<int:member_id>', methods=['PUT'])
+def update_task_route(task_id, member_id):
+    return update_task(task_id, member_id)
 
 
 #-----------------------------** RUTAS DE MIEMBROS **-------------------------------------
