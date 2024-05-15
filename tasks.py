@@ -1,11 +1,14 @@
+# Importaciones
 from flask import jsonify, request
 import mariadb
 import sys
 from config import DATABASE_CONFIG
 
+# Conexión a la base de datos
 conn = mariadb.connect(**DATABASE_CONFIG)
 
 #------------------------------------** FUNCION CREATE TASK **----------------------------------------
+# Crea una nueva tarea
 def create_task(project_id, member_id):
     data = request.json
     task_name = data.get('task_name')
@@ -25,18 +28,19 @@ def create_task(project_id, member_id):
         cursor.close()
 
 #------------------------------------** FUNCION DELETE TASK **----------------------------------------
+# Elimina una tarea existente
 def delete_task(task_id):
     try:
         cursor = conn.cursor()
         
-        # Check if task exists
+        # Verifica si la tarea existe
         cursor.execute("SELECT * FROM tasks WHERE task_id = %s", (task_id,))
         task = cursor.fetchone()
 
         if task is None:
             return jsonify({"error": "Task does not exist."}), 404
         
-        # Delete the task
+        # Elimina la tarea
         cursor.execute("DELETE FROM tasks WHERE task_id = %s", (task_id,))
         conn.commit()
         
@@ -48,6 +52,7 @@ def delete_task(task_id):
         cursor.close()
 
 #------------------------------------** FUNCION GET ALL TASKS **----------------------------------------
+# Obtiene todas las tareas
 def get_all_tasks():
     try:
         projects_with_tasks = {}
@@ -98,6 +103,7 @@ def get_all_tasks():
         cursor.close()
 
 #------------------------------------** FUNCION UPDATE TASK **----------------------------------------
+# Actualiza una tarea existente
 def update_task(task_id, member_id):
     try:
         data = request.json
@@ -116,7 +122,3 @@ def update_task(task_id, member_id):
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
-
-
-
-        
