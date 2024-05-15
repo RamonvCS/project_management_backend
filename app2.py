@@ -11,6 +11,7 @@ app = Flask(__name__)
 CORS(app)
 
 #-----------------------------** RUTAS DE TAREAS **---------------------------------------
+
 # Crea una nueva tarea asignada a un miembro en un proyecto específico.
 @app.route('/api/new_task/<int:project_id>/<int:member_id>', methods=['POST'])
 def new_task_route(project_id, member_id):
