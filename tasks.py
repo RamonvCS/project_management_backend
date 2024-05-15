@@ -4,18 +4,23 @@ import mariadb
 import sys
 from config import DATABASE_CONFIG
 
-# Conexión a la base de datos
-conn = mariadb.connect(**DATABASE_CONFIG)
+def get_db_connection():
+    try:
+        conn = mariadb.connect(**DATABASE_CONFIG)
+        return conn
+    except mariadb.Error as e:
+        print(f"Error connecting to MariaDB: {e}")
+        sys.exit(1)
 
-#------------------------------------** FUNCION CREATE TASK **----------------------------------------
 # Crea una nueva tarea
 def create_task(project_id, member_id):
-    data = request.json
-    task_name = data.get('task_name')
-    start_date = data.get('start_date')
-    end_date = data.get('end_date')
-
+    conn = get_db_connection()
     try:
+        data = request.json
+        task_name = data.get('task_name')
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+
         cursor = conn.cursor()
         cursor.execute("INSERT INTO tasks (task_name, start_date, end_date, member_id, project_id) VALUES (?, ?, ?, ?, ?)",
                        (task_name, start_date, end_date, member_id, project_id))
@@ -26,10 +31,12 @@ def create_task(project_id, member_id):
         return jsonify({"message": str(e)}), 500
     finally:
         cursor.close()
+        conn.close()
 
 #------------------------------------** FUNCION DELETE TASK **----------------------------------------
 # Elimina una tarea existente
 def delete_task(task_id):
+    conn = get_db_connection()
     try:
         cursor = conn.cursor()
         
@@ -50,10 +57,12 @@ def delete_task(task_id):
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
+        conn.close()
 
 #------------------------------------** FUNCION GET ALL TASKS **----------------------------------------
 # Obtiene todas las tareas
 def get_all_tasks():
+    conn = get_db_connection()
     try:
         projects_with_tasks = {}
 
@@ -101,10 +110,12 @@ def get_all_tasks():
 
     finally:
         cursor.close()
+        conn.close()
 
 #------------------------------------** FUNCION UPDATE TASK **----------------------------------------
 # Actualiza una tarea existente
 def update_task(task_id, member_id):
+    conn = get_db_connection()
     try:
         data = request.json
         task_name = data.get('task_name')
@@ -122,3 +133,4 @@ def update_task(task_id, member_id):
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
+        conn.close()

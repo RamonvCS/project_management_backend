@@ -3,10 +3,17 @@ import mariadb
 import sys
 from config import DATABASE_CONFIG
 
-conn = mariadb.connect(**DATABASE_CONFIG)
+def get_db_connection():
+    try:
+        conn = mariadb.connect(**DATABASE_CONFIG)
+        return conn
+    except mariadb.Error as e:
+        print(f"Error connecting to MariaDB: {e}")
+        sys.exit(1)
 
 #------------------------------------** FUNCION NEW PROJECT **----------------------------------------
 def new_project():
+    conn = get_db_connection()
     try:
         data = request.json
         project_name = data.get('project_name')
@@ -24,9 +31,11 @@ def new_project():
         
     finally:
         cursor.close()
+        conn.close()
 
 #------------------------------------** FUNCION DELETE PROJECT **----------------------------------------
 def delete_project(project_id):
+    conn = get_db_connection()
     try:
         cursor = conn.cursor()
         
@@ -57,9 +66,11 @@ def delete_project(project_id):
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
+        conn.close()
 
 #------------------------------------** FUNCION UPDATE PROJECT **----------------------------------------
 def update_project(project_id):
+    conn = get_db_connection()
     try:
         data = request.json
         project_name = data.get('project_name')
@@ -77,11 +88,13 @@ def update_project(project_id):
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
+        conn.close()
 
 #------------------------------------** FUNCION GET ALL PROJECTS **----------------------------------------
 def get_all_projects():
-    cursor = conn.cursor()
+    conn = get_db_connection()
     try:
+        cursor = conn.cursor()
         cursor.execute("SELECT project_name, description, project_id, status FROM projects")
         rows = cursor.fetchall()
         projects = [
@@ -95,3 +108,4 @@ def get_all_projects():
         return jsonify({"error": str(e)}), 500
     finally:
         cursor.close()
+        conn.close()
